@@ -38,15 +38,15 @@ data:
   video_tolerance_s: 0.1
   parquet_cache_size: 512
   sampling_mode: multi_anchor
-  video_backend: torchcodec
+  video_backend: pyav
 
 actor:
   group_name: "ActorGroup"
   training_backend: "fsdp"
   micro_batch_size: 1
-  global_batch_size: 16
+  global_batch_size: 4
   seed: 42
-  enable_offload: False
+  enable_offload: True
 
   model:
     model_type: "dreamzero"
@@ -101,7 +101,7 @@ actor:
     backward_prefetch: "pre"
     reshard_after_forward: True
     save_full_model_weights: False
-    cpu_offload: False
+    cpu_offload: True
     grad_scaler:
       enabled: False
     mixed_precision:
