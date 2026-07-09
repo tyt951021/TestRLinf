@@ -1,0 +1,113 @@
+defaults:
+  - hybrid_engines/fsdp@actor.fsdp_config
+  - model/dreamzero_5b@actor.model
+  - override hydra/job_logging: stdout
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  searchpath:
+    - file://${oc.env:EMBODIED_PATH}/config/
+
+cluster:
+  num_nodes: 2
+  component_placement:
+    actor: all
+
+runner:
+  task_type: sft
+  logger:
+    log_path: "../results"
+    project_name: rlinf
+    experiment_name: "agibot_alpha_sft_dreamzero"
+    logger_backends: ["tensorboard"]
+
+  max_epochs: -1
+  max_steps: 50000
+  val_check_interval: -1
+  save_interval: 3000
+  log_interval: 100
+  resume_dir: null
+
+data:
+  train_data_paths: /iag_ad_01/ad/xiejinxia/data/AgiBotWorld-Alpha-LeRobot/agibotworld/task_355
+  lazy_load: True
+  num_workers: 4
+  prefetch_factor: 8
+  video_tolerance_s: 0.1
+  parquet_cache_size: 512
+  sampling_mode: multi_anchor
+  video_backend: torchcodec
+
+actor:
+  group_name: "ActorGroup"
+  training_backend: "fsdp"
+  micro_batch_size: 1
+  global_batch_size: 16
+  seed: 42
+  enable_offload: False
+
+  model:
+    model_type: "dreamzero"
+    precision: fp32
+    # 冷启动：从 Wan2.2-TI2V-5B 权重开始
+    model_path: null
+    tokenizer_path: /iag_ad_01/ad/xiejinxia/code/test/dreamzero/checkpoints/Wan2.1-I2V-14B-480P/google/umt5-xxl
+
+    diffusion_model_pretrained_path: /iag_ad_01/ad/xiejinxia/code/test/dreamzero/checkpoints/Wan2.2-TI2V-5B
+    image_encoder_pretrained_path: /iag_ad_01/ad/xiejinxia/code/test/dreamzero/checkpoints/Wan2.1-I2V-14B-480P/models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth
+    text_encoder_pretrained_path: /iag_ad_01/ad/xiejinxia/code/test/dreamzero/checkpoints/Wan2.2-TI2V-5B/models_t5_umt5-xxl-enc-bf16.pth
+    vae_pretrained_path: /iag_ad_01/ad/xiejinxia/code/test/dreamzero/checkpoints/Wan2.2-TI2V-5B/Wan2.2_VAE.pth
+
+    # 下载 DreamZero-AgiBot 后切换为 fine-tune 模式：
+    # model_path: /path/to/DreamZero-AgiBot
+    # 并注释掉上面的 *_pretrained_path
+
+    metadata_json_path: /iag_ad_01/ad/xiejinxia/data/AgiBotWorld-Alpha-LeRobot/agibot_alpha_metadata.json
+
+    # AgiBot G1 配置（与 DreamZero-AgiBot conf.yaml 一致）
+    action_horizon: 48
+    num_action_per_block: 48
+
+    is_lora: False
+    embodiment_tag: "agibot_alpha"
+    relative_action: False
+    relative_action_per_horizon: False
+
+    # G1 action_dim=22，DreamZero max_action_dim=32 足够容纳
+    max_action_dim: 32
+    max_state_dim: 64
+
+  optim:
+    lr: 1.0e-5
+    adam_beta1: 0.95
+    adam_beta2: 0.999
+    adam_eps: 1.0e-08
+    weight_decay: 1.0e-5
+    clip_grad: 1.0
+    lr_scheduler: "cosine"
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.05
+    total_training_steps: 50000
+
+  fsdp_config:
+    strategy: "fsdp2"
+    use_orig_params: True
+    gradient_checkpointing: True
+    gradient_checkpointing_use_reentrant: True
+    limit_all_gathers: True
+    forward_prefetch: True
+    backward_prefetch: "pre"
+    reshard_after_forward: True
+    save_full_model_weights: False
+    cpu_offload: False
+    grad_scaler:
+      enabled: False
+    mixed_precision:
+      param_dtype: bf16
+      reduce_dtype: bf16
+      buffer_dtype: bf16
+    amp_autocast:
+      enabled: False
+      precision: "bf16"

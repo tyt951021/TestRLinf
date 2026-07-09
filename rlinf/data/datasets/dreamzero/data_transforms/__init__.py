@@ -29,6 +29,9 @@ from rlinf.data.datasets.dreamzero.data_transforms.embodiment_tag import Embodim
 from rlinf.data.datasets.dreamzero.data_transforms.franka_pnp import (
     FrankaPnpDataTransform,
 )
+from rlinf.data.datasets.dreamzero.data_transforms.agibot_alpha import (
+    AgibotAlphaDataTransform,
+)
 from rlinf.data.datasets.dreamzero.data_transforms.libero_sim import (
     LiberoSimDataTransform,
 )
@@ -40,6 +43,7 @@ _EMBODIMENT_REGISTRY: dict[str, type[DreamZeroEmbodimentTransform]] = {
     LiberoSimDataTransform.TAG: LiberoSimDataTransform,
     OxeDroidDataTransform.TAG: OxeDroidDataTransform,
     FrankaPnpDataTransform.TAG: FrankaPnpDataTransform,
+    AgibotAlphaDataTransform.TAG: AgibotAlphaDataTransform,
 }
 
 DEFAULT_EMBODIMENT_TAG_MAPPING: dict[str, dict[str, int]] = {

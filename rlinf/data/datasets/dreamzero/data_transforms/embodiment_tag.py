@@ -27,3 +27,4 @@ class EmbodimentTag(Enum):
     LIBERO_SIM = "libero_sim"
     OXE_DROID = "oxe_droid"
     FRANKA_PNP = "franka_pnp"
+    AGIBOT_ALPHA = "agibot_alpha"
